@@ -3,6 +3,18 @@
 
 Dairy Products App for mobile is a cross platform application built in [Graphene](https://docs.graphene-python.org/en/latest/) using GraphQL API.
 
+### Programming language,API and other Modules used in This Project:-
+- programming lang:- Python
+- API:- GraphQL(Graphene)
+- Framework:- FAST API
+- Database(RDBMS):- Postgresql,SQLite
+- NOSQL Dataabse:- redis
+- ORM:- SQLALchemy
+- Jwt Library:- PyJWT
+- PasswordHashing:- argon2
+- CI/CD:- DOCKER(Dockerfile)
+
+- other modules used are datetime,os,load_dotenv
 
 ### Setup Project
 
