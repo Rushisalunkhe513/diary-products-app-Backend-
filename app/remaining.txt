@@ -1,0 +1,20 @@
+remaining work:-
+query:-
+1) Query for items with less quantity----> Done # query to get data from releated table = session.query(ItemModel).join(ItemDetailModel).filter(ItemDetailModel.quantity < 10).all()
+2) Query for searching items ---> Done
+3) query for wallets with balance less or eqaul to 0. --> Done
+4) query for users recent transactions by wallet_tansaction table.
+5) query for users recent orders. ---> Done
+
+
+Mutation:-
+1) add authentication by adding jwt token during login
+2) add redis server for otp verification
+3) add admin table and pply admin right for adding items and eberything.-Done
+4) apply session based authentication.-Done
+
+# work on how subscription works and wallet and item qauntity reducution.
+# add wallet_tansaction table to add wallet addition and reduction by order or adding balance.---> Done
+
+
+# dockerfile create for redis and application. 
