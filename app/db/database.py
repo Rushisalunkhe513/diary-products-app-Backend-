@@ -18,6 +18,7 @@ config = Production() if os.getenv("PRODUCTION")  else Development()
 
 DB_URL = config.db_url
 print("*******Database url******", DB_URL)
+print("******************Redis***************",config.r_client)
 
 # lets get create_engine to establish connection with database and python application.
 """

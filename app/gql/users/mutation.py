@@ -11,9 +11,14 @@ from app.utils import (password_hash,
                       token_for_new_acc_ref_token,
                       add_tokens_to_user_session,
                       add_tokens_to_admin_session,
-                      admin_privaleges)
+                      admin_privaleges,
+                      store_otp,
+                      verify_otp)
 
 from app.db.blocklist import BlockList
+from app.db.database import config
+
+import random
 
 from graphql import GraphQLError
 
@@ -74,29 +79,31 @@ class UserRegistartion(Mutation): # Mutation to say this is for adding,updating 
                         message = f"user with mobile_number {mobile_number} already exists. 'please Login !'",
                         status_code = 404
                     )
+                else:
+                    otp = random.randint(1000,9999)
+                    store_otp(mobile_number,otp,config.r_client)
+                    new_user = UserObject(
+                        first_name = first_name,
+                        last_name = last_name,
+                        pin_hash = password_hash(pin),
+                        pincode = pincode,
+                        city = city,
+                        land_mark = land_mark,
+                        address = address,
+                        mobile_number = mobile_number
+                    )
                     
-                new_user = UserObject(
-                    first_name = first_name,
-                    last_name = last_name,
-                    pin_hash = password_hash(pin),
-                    pincode = pincode,
-                    city = city,
-                    land_mark = land_mark,
-                    address = address,
-                    mobile_number = mobile_number
-                )
-                
-                
-                session.add(new_user)
-                session.commit()
-                session.refresh(new_user)
-                
-                acc_exp_time = (datetime.now() + timedelta(hours=int(os.getenv("USER_EXP_ACCESS_TIME")))).isoformat()
-                ref_exp_time = (datetime.now() + timedelta(hours=int(os.getenv("USER_EXP_REF_TIME")))).isoformat()
-                
-                # genrating token and creating user session.
-                token_data = gen_user_access_and_refresh_token(new_user.id,new_user.mobile_number,acc_exp_time,ref_exp_time,role="user")
-                user_session = add_tokens_to_user_session(token_data["access_token"],token_data["refresh_token"],new_user.mobile_number,new_user.id,new_user.first_name,Session)
+                    
+                    session.add(new_user)
+                    session.commit()
+                    session.refresh(new_user)
+                    
+                    acc_exp_time = (datetime.now() + timedelta(hours=int(os.getenv("USER_EXP_ACCESS_TIME")))).isoformat()
+                    ref_exp_time = (datetime.now() + timedelta(hours=int(os.getenv("USER_EXP_REF_TIME")))).isoformat()
+                    
+                    # genrating token and creating user session.
+                    token_data = gen_user_access_and_refresh_token(new_user.id,new_user.mobile_number,acc_exp_time,ref_exp_time,role="user")
+                    user_session = add_tokens_to_user_session(token_data["access_token"],token_data["refresh_token"],new_user.mobile_number,new_user.id,new_user.first_name,Session)
                 
                 if user_session:
                     return UserRegistartion(
@@ -123,6 +130,7 @@ class UserLogin(Mutation):
     class Arguments:
         mobile_number = String(required=True)
         pin = String(required=True)
+        otp = Int(required = True)
         
     status = String()
     message = String()
@@ -131,8 +139,8 @@ class UserLogin(Mutation):
     refresh_token = String()
     
     @staticmethod
-    def mutate(root, info, mobile_number, pin):
-        # try:
+    def mutate(root, info, mobile_number, pin,otp):
+        try:
             with Session() as session:
                 user = session.query(UserObject).filter(UserObject.mobile_number == mobile_number).first()
                     
@@ -144,7 +152,11 @@ class UserLogin(Mutation):
                     )
                 
                 verify_user = validate_password(user.pin_hash, pin)
-                if verify_user:
+                
+                # verifying otp from user at user login
+                verify_otp_data = verify_otp(mobile_number,otp,config.r_client)
+                
+                if verify_user and verify_otp_data:
                     
                     # now user is verified then lets gen access and refresh tokens.
                     acc_exp_time = (datetime.now() + timedelta(hours=int(os.getenv("USER_EXP_ACCESS_TIME")))).isoformat()
@@ -162,7 +174,7 @@ class UserLogin(Mutation):
                             access_token = token_data["access_token"],
                             refresh_token = token_data["refresh_token"]
                         )
-        # except:
+        except:
                 return UserLogin(
                     status="failed",
                     status_code=401,

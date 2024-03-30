@@ -14,12 +14,31 @@ from app.db.blocklist import BlockList
 
 
 
+
 import jwt
 
 ph = PasswordHasher()
 
 load_dotenv()
 
+# function to store otp in cache
+def store_otp(mobile_number,otp,r_client):
+    # store
+    try:
+        store = r_client.set(mobile_number,otp,exp=60)
+        return True
+    except:
+        return False
+    
+# verify otp by fetching otp from redis
+def verify_otp(mobile_number,otp,r_client):
+    # verify otp
+    
+    get_otp = r_client.get(mobile_number)
+    if get_otp == otp:
+        return True
+    else:
+        return False
 
 def password_hash(password):
     secured_password =  ph.hash(password)
